@@ -1,0 +1,49 @@
+---
+title: "Labor Force Participation Rate"
+author: "Matthew Houser"
+date: "December 7, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+#Import libraries
+library(tidyverse)
+library(fredr)
+```
+
+```{r}
+#Import data
+fredr_set_key("2d4104c35bfc5185ef631b380c2f78dd")
+male_lfpr <- fredr(series_id = "LNS11300001",frequency = "m")
+female_lfpr <- fredr(series_id = "LNS11300002",frequency = "m")
+
+#Remove series id
+male_lfpr <- select(male_lfpr, -series_id)
+female_lfpr <- select(female_lfpr, -series_id)
+
+#Rename columns
+names(male_lfpr) <- c("date", "Male_LFP")
+names(female_lfpr) <- c("date", "Female_LFP")
+#Join data
+df <- left_join(male_lfpr, female_lfpr, by = "date")
+#Add column for gender gap
+df <- mutate(df, gap = Male_LFP-Female_LFP)
+
+```
+
+```{r}
+ggplot(df) +
+  geom_line(aes(date, Male_LFP, color = "Male"), size = 1) +
+  geom_line(aes(date, gap, color = "Gender Gap"), size = 1) + 
+  geom_line(aes(date, Female_LFP, color = "Female"), size = 1) + 
+  ggtitle("Monthly Labor Force Participation Rate, 1948-2018") + 
+  ylab("Labor Force Participation Rate") + 
+  xlab("Year") + 
+  scale_y_continuous(limits = c(4, 96), breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100))+ 
+  theme_bw() +
+  guides(color = guide_legend(reverse = TRUE)) + 
+  theme(legend.title = element_blank())
+
+```
